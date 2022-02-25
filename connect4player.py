@@ -63,7 +63,7 @@ class ComputerPlayer:
             best = -np.inf
         return 0
 
-    def __get_children(self, rack: Tuple[Tuple[int]], color):
+    def __get_children(self, rack: Tuple[Tuple[int, ...], ...], color):
         """
         gets an array of all possible moves that
         can be made in a position, with a color
@@ -81,7 +81,7 @@ class ComputerPlayer:
                     child.append(newcol)
                 else:  # copy in the old columns
                     child.append(rack[j])
-            children.append(Tuple(child))
+            children.append(tuple(child))
 
         return children
 
@@ -89,7 +89,9 @@ class ComputerPlayer:
         """
         given a column tuple and a color,
         drop a new disc of that color in
-        the column
+        the column, where the first 0 occurs
+        note that this assumes the column is valid
+        in a game, so no zeroes occur before discs
         """
         zero_index = -1
         j = 0
@@ -109,7 +111,7 @@ class ComputerPlayer:
             else:
                 copy.append(col[k])
 
-        return Tuple(col)
+        return tuple(copy)
 
     def __evaluate(self, rack, n):
         """
@@ -126,7 +128,7 @@ class ComputerPlayer:
         for i in range(len(rack[0])):
             rows.append([0] * len(rack))
         for i, col in enumerate(rack):  # sum all columns first
-            ret = self._count_in_line(col, n)
+            ret = self.__count_in_line(col, n)
             if ret == np.inf or ret == -np.inf:
                 return ret
             else:
@@ -318,7 +320,6 @@ class ComputerPlayer:
                             )
                             count[self.id][i - j][j] = -2 * n
                             if j == (n - 1):
-
                                 opp_score = count[self.opp][i - n + 1][n - 1]
                                 if opp_score == n:  # game over!!!
                                     return -np.inf
@@ -335,19 +336,27 @@ class ComputerPlayer:
                         count[self.opp][k][j] = count[self.opp][k][j - 1] + 1  # fill
                         count[self.id][k][j] = -2 * n
                         if j == (n - 1):
-                            opp_score = count[self.id][k][n - 1]
+                            opp_score = count[self.opp][k][n - 1]
                             if opp_score == n:  # game over!!!
                                 return -np.inf
                             # else, add/sub from sum. casting 10^(-x) to an int is 0
                             total -= int(10**opp_score)
         return total
 
+    def test(self):
+        rack = ((1,), (0,), (0,), (1,), (2,), (2,), (2,), (0,))
+
+        print(self.__count_in_line((1, 0, 0, 1, 2, 2, 2, 2), 4))
+        """
+        for r in self.__get_children(rack, 2):
+            print("-------------------")
+            for col in r:
+                print(col)
+            print("-------------------")
+            print(self.__evaluate(r, 4))
+        """
+
 
 if __name__ == "__main__":
-    c = ComputerPlayer(1, 1)
-    print(((0, 0, 1, 0, 2), (0, 1, 1, 0, 2), (0, 1, 2, 2, 2), (0, 1, 1, 0, 1)))
-    print(
-        c.__evaluate(
-            ((0, 0, 1, 0, 2), (0, 1, 1, 0, 2), (0, 1, 2, 2, 2), (0, 1, 1, 0, 1)), 4
-        )
-    )
+    c = ComputerPlayer(1, 3)
+    c.test()
